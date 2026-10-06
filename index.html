@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVERDRIVE: Arena Roguelike</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <div id="game-wrapper">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD (IN-GAME INTERFACE) -->
+        <div id="hud" class="hidden">
+            <div class="hud-top">
+                <!-- Player HP & Dash Charges -->
+                <div class="hud-player-stats">
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-bg">
+                            <div id="hudHpFill" class="hp-bar-fill"></div>
+                        </div>
+                        <span id="hudHpText" class="hp-text">100 / 100</span>
+                    </div>
+                    <div class="hud-dash-container">
+                        <span class="dash-label">DASH</span>
+                        <div id="hudDashPips" class="dash-pips">
+                            <div class="dash-pip ready"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wave & Enemy Counters -->
+                <div class="hud-wave-stats">
+                    <div class="hud-badge">
+                        <span class="badge-label">WAVE</span>
+                        <span id="hudWave" class="badge-value">1</span>
+                    </div>
+                    <div class="hud-badge">
+                        <span class="badge-label">INIMIGOS</span>
+                        <span id="hudEnemiesLeft" class="badge-value">0</span>
+                    </div>
+                    <div class="hud-badge">
+                        <span class="badge-label">NÚCLEOS</span>
+                        <span id="hudShards" class="badge-value shards-val">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boss Health Bar -->
+            <div id="bossHealthContainer" class="boss-health-bar-container hidden">
+                <div id="bossName" class="boss-title">APEX ENFORCER V-1</div>
+                <div class="boss-hp-bg">
+                    <div id="bossHpFill" class="boss-hp-fill"></div>
+                </div>
+            </div>
+
+            <!-- Active Upgrades Badges -->
+            <div class="hud-bottom">
+                <div id="hudUpgrades" class="hud-upgrades-tray"></div>
+            </div>
+        </div>
+
+        <!-- MAIN MENU MODAL -->
+        <div id="mainMenu" class="modal-overlay">
+            <div class="modal-content">
+                <h1 class="game-title">OVERDRIVE</h1>
+                <p class="game-tagline">ARENA ROGUELIKE DE AÇÃO EM ALTA VELOCIDADE</p>
+
+                <div class="menu-meta-stats">
+                    <div>
+                        <div class="badge-label">RECORDE DE WAVE</div>
+                        <div id="menuHighScore" class="badge-value">1</div>
+                    </div>
+                    <div>
+                        <div class="badge-label">NÚCLEOS PERMANENTES</div>
+                        <div id="menuShards" class="badge-value shards-val">0</div>
+                    </div>
+                </div>
+
+                <div class="menu-btn-group">
+                    <button id="btnStartRun" class="btn-primary">INICIAR RUN</button>
+                    <button id="btnOpenShop" class="btn-secondary">💎 MATRIZ NEURAL (UPGRADES)</button>
+                    <button id="btnOpenControls" class="btn-secondary">📖 COMO JOGAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPGRADE MODAL (ENTRE WAVES) -->
+        <div id="upgradeModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 style="font-size: 28px; font-weight: 900; color: #00f0ff;">WAVE CONCLUÍDA!</h2>
+                <p style="color: #8892b0; font-size: 14px; margin-top: 4px;">Escolha 1 aprimoramento para forjar sua build:</p>
+
+                <div id="upgradeCards" class="upgrade-cards-grid">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+
+                <button id="btnReroll" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">
+                    RE-ROLAR (1)
+                </button>
+            </div>
+        </div>
+
+        <!-- GAME OVER MODAL -->
+        <div id="gameOverModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 style="font-size: 40px; font-weight: 900; color: #ff0055;">SISTEMA CRÍTICO</h2>
+                <p style="color: #8892b0; margin-bottom: 24px;">Sua run chegou ao fim, piloto.</p>
+
+                <div class="menu-meta-stats">
+                    <div>
+                        <div class="badge-label">WAVES SOBREVIVIDAS</div>
+                        <div id="statWave" class="badge-value">0</div>
+                    </div>
+                    <div>
+                        <div class="badge-label">ELIMINAÇÕES</div>
+                        <div id="statKills" class="badge-value">0</div>
+                    </div>
+                    <div>
+                        <div class="badge-label">NÚCLEOS COLETADOS</div>
+                        <div id="statShards" class="badge-value shards-val">0</div>
+                    </div>
+                </div>
+
+                <p style="font-size: 13px; color: #8892b0; margin-bottom: 24px;">
+                    Total acumulado: <strong id="totalShardsOver" style="color: #ffd700;">0</strong> Núcleos para a Matriz Neural.
+                </p>
+
+                <div class="menu-btn-group">
+                    <button id="btnRetry" class="btn-primary">TENTAR NOVAMENTE</button>
+                    <button id="btnShopFromOver" class="btn-secondary">💎 MATRIZ NEURAL</button>
+                    <button id="btnMenuFromOver" class="btn-secondary">MENU PRINCIPAL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEURAL MATRIX SHOP MODAL -->
+        <div id="shopModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 style="font-size: 30px; font-weight: 900; color: #ffd700;">MATRIZ NEURAL</h2>
+                <p style="color: #8892b0; font-size: 14px;">Desbloqueie aprimoramentos permanentes com Núcleos Cibernéticos:</p>
+
+                <div style="margin: 12px 0; font-size: 16px; font-weight: 800; color: #ffd700;">
+                    Seus Núcleos: 💎 <span id="shopShardsCount">0</span>
+                </div>
+
+                <div id="shopItemsList" class="shop-items-container">
+                    <!-- Upgrades dynamically rendered -->
+                </div>
+
+                <button id="btnCloseShop" class="btn-secondary" style="width: 220px; margin-top: 10px;">VOLTAR</button>
+            </div>
+        </div>
+
+        <!-- CONTROLS & HOW TO PLAY MODAL -->
+        <div id="controlsModal" class="modal-overlay hidden">
+            <div class="modal-content" style="max-width: 800px;">
+                <h2 style="font-size: 28px; font-weight: 900; color: #00f0ff;">MANUAL DE MOVIMENTAÇÃO E COMBATE</h2>
+                <p style="color: #8892b0; font-size: 13px;">O segredo da sobrevivência é manter-se em movimento constante!</p>
+
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <span class="control-keys">A / D ou Setas</span>
+                        <span class="control-desc">Corrida rápida com aceleração e desaceleração ágeis.</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">W / Espaço / Seta Cima</span>
+                        <span class="control-desc">Pulo preciso + <strong>Double Jump</strong> no ar! Solte antes para pulo curto.</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">Shift / K / Botão Dir. Mouse</span>
+                        <span class="control-desc"><strong>Dash Horizontal e Aéreo</strong> com invulnerabilidade momentânea.</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">J / Botão Esq. Mouse</span>
+                        <span class="control-desc"><strong>Ataque Melee</strong> integrado: combo de 3 golpes, giro aéreo ou ataque em dash!</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">Colidir na Parede + Pulo</span>
+                        <span class="control-desc"><strong>Wall Slide</strong> (reduz queda) e <strong>Wall Jump</strong> para escalar e manobrar.</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">S / Seta Baixo no ar</span>
+                        <span class="control-desc"><strong>Queda Rápida (Fast Fall)</strong> para descer velozmente das alturas.</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">S / Baixo + Ataque no ar</span>
+                        <span class="control-desc"><strong>Seismic Dive Slam!</strong> Mergulho devastador com impacto em área!</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-keys">S / Baixo + Pulo nas plataformas</span>
+                        <span class="control-desc">Descer pelas plataformas transparentes da arena.</span>
+                    </div>
+                </div>
+
+                <button id="btnCloseControls" class="btn-primary" style="width: 200px;">ENTENDIDO</button>
+            </div>
+        </div>
+
+        <!-- PAUSE MODAL -->
+        <div id="pauseModal" class="modal-overlay hidden">
+            <div class="modal-content" style="max-width: 400px;">
+                <h2 style="font-size: 32px; font-weight: 900; color: #00f0ff;">PAUSADO</h2>
+                <div class="menu-btn-group" style="margin-top: 24px;">
+                    <button id="btnResume" class="btn-primary">CONTINUAR</button>
+                    <button id="btnToggleMute" class="btn-secondary">🔇 Silenciar</button>
+                    <button id="btnMenuFromPause" class="btn-secondary">MENU PRINCIPAL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/engine/audio.js"></script>
+    <script src="js/engine/input.js"></script>
+    <script src="js/engine/camera.js"></script>
+    <script src="js/engine/particles.js"></script>
+    <script src="js/game/arena.js"></script>
+    <script src="js/game/player.js"></script>
+    <script src="js/game/enemies.js"></script>
+    <script src="js/game/upgrades.js"></script>
+    <script src="js/game/metaprogression.js"></script>
+    <script src="js/game/waveManager.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
